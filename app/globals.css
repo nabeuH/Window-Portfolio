@@ -1,0 +1,202 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: #1a1a2e;
+  --foreground: #e0e0e0;
+  --card: #16213e;
+  --card-foreground: #e0e0e0;
+  --popover: #16213e;
+  --popover-foreground: #e0e0e0;
+  --primary: #4ade80;
+  --primary-foreground: #0a0a0a;
+  --secondary: #1e293b;
+  --secondary-foreground: #e0e0e0;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --accent: #f59e0b;
+  --accent-foreground: #0a0a0a;
+  --destructive: #ef4444;
+  --destructive-foreground: #fecaca;
+  --border: #334155;
+  --input: #334155;
+  --ring: #4ade80;
+  --radius: 0.25rem;
+
+  --os-titlebar: #2563eb;
+  --os-titlebar-inactive: #64748b;
+  --os-taskbar: #0f172a;
+  --os-start: #16a34a;
+  --os-window-bg: #0f172a;
+  --os-window-border: #475569;
+  --os-glow: #4ade80;
+  --os-amber: #f59e0b;
+}
+
+/* Classic mode overrides */
+.theme-classic {
+  --os-titlebar: #2563eb;
+  --os-taskbar: #1e40af;
+  --os-start: #16a34a;
+  --os-window-bg: #e2e8f0;
+  --os-window-border: #94a3b8;
+  --card: #e2e8f0;
+  --card-foreground: #1e293b;
+  --foreground: #1e293b;
+  --background: #bfdbfe;
+  --muted-foreground: #475569;
+  --border: #94a3b8;
+  --secondary: #cbd5e1;
+  --secondary-foreground: #1e293b;
+}
+
+@theme inline {
+  --font-sans: 'Geist', 'Geist Fallback', 'Segoe UI', Tahoma, sans-serif;
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback', 'Consolas', monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+  --radius-xl: calc(var(--radius) + 6px);
+}
+
+/* Scanline overlay */
+.scanlines::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+}
+
+.theme-classic .scanlines::after {
+  display: none;
+}
+
+/* CRT glow effect for ops mode */
+.ops-glow {
+  text-shadow: 0 0 4px var(--os-glow), 0 0 8px rgba(74, 222, 128, 0.3);
+}
+
+/* Window drag handle */
+.window-drag {
+  cursor: grab;
+}
+.window-drag:active {
+  cursor: grabbing;
+}
+
+/* Blinking cursor for terminal */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.terminal-cursor {
+  animation: blink 1s step-end infinite;
+}
+
+/* Boot text typing effect */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.boot-line {
+  animation: fadeInUp 0.15s ease-out forwards;
+  opacity: 0;
+}
+
+/* Subtle window open animation */
+@keyframes windowOpen {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.window-open {
+  animation: windowOpen 0.15s ease-out forwards;
+}
+
+/* Desktop icon hover */
+.desktop-icon {
+  transition: background-color 0.1s ease;
+}
+.desktop-icon:hover {
+  background-color: rgba(74, 222, 128, 0.1);
+}
+.desktop-icon.selected {
+  background-color: rgba(74, 222, 128, 0.2);
+}
+.theme-classic .desktop-icon:hover {
+  background-color: rgba(37, 99, 235, 0.15);
+}
+.theme-classic .desktop-icon.selected {
+  background-color: rgba(37, 99, 235, 0.25);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 14px;
+}
+::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+::-webkit-scrollbar-thumb {
+  background: #475569;
+  border: 2px solid #1e293b;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+.theme-classic ::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}
+.theme-classic ::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border: 2px solid #e2e8f0;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
