@@ -12,6 +12,9 @@ export interface WindowState {
   position: { x: number; y: number }
   size: { width: number; height: number }
   zIndex: number
+  isMaximized: boolean
+  previousPosition: { x: number; y: number } | null
+  previousSize: { width: number; height: number } | null
 }
 
 interface OSState {
@@ -33,9 +36,12 @@ type OSAction =
   | { type: "RESTORE_WINDOW"; id: AppId }
   | { type: "FOCUS_WINDOW"; id: AppId }
   | { type: "MOVE_WINDOW"; id: AppId; position: { x: number; y: number } }
+  | { type: "MAXIMIZE_WINDOW"; id: AppId }
+  | { type: "RESTORE_MAXIMIZE"; id: AppId }
   | { type: "SELECT_ICON"; icon: string | null }
   | { type: "TOGGLE_START_MENU" }
   | { type: "CLOSE_START_MENU" }
+  | { type: "OPEN_WINDOW_MAXIMIZED"; app: AppId }
 
 const APP_DEFAULTS: Record<AppId, { title: string; width: number; height: number }> = {
   projects: { title: "Projects", width: 750, height: 500 },
@@ -98,6 +104,9 @@ function osReducer(state: OSState, action: OSAction): OSState {
         position: getInitialPosition(action.app, state.windows),
         size: { width: defaults.width, height: defaults.height },
         zIndex: state.nextZIndex,
+        isMaximized: false,
+        previousPosition: null,
+        previousSize: null,
       }
       return {
         ...state,
@@ -163,6 +172,92 @@ function osReducer(state: OSState, action: OSAction): OSState {
         ),
       }
 
+    case "MAXIMIZE_WINDOW":
+      return {
+        ...state,
+        windows: state.windows.map((w) =>
+          w.id === action.id
+            ? {
+                ...w,
+                isMaximized: true,
+                previousPosition: w.position,
+                previousSize: w.size,
+                position: { x: 0, y: 0 },
+                size: { width: 9999, height: 9999 },
+                zIndex: state.nextZIndex,
+              }
+            : w
+        ),
+        activeWindowId: action.id,
+        nextZIndex: state.nextZIndex + 1,
+      }
+
+    case "RESTORE_MAXIMIZE":
+      return {
+        ...state,
+        windows: state.windows.map((w) =>
+          w.id === action.id
+            ? {
+                ...w,
+                isMaximized: false,
+                position: w.previousPosition ?? w.position,
+                size: w.previousSize ?? w.size,
+                previousPosition: null,
+                previousSize: null,
+                zIndex: state.nextZIndex,
+              }
+            : w
+        ),
+        activeWindowId: action.id,
+        nextZIndex: state.nextZIndex + 1,
+      }
+
+    case "OPEN_WINDOW_MAXIMIZED": {
+      const existingMax = state.windows.find((w) => w.id === action.app)
+      if (existingMax) {
+        return {
+          ...state,
+          startMenuOpen: false,
+          windows: state.windows.map((w) =>
+            w.id === action.app
+              ? {
+                  ...w,
+                  minimized: false,
+                  isMaximized: true,
+                  previousPosition: w.previousPosition ?? w.position,
+                  previousSize: w.previousSize ?? w.size,
+                  position: { x: 0, y: 0 },
+                  size: { width: 9999, height: 9999 },
+                  zIndex: state.nextZIndex,
+                }
+              : w
+          ),
+          activeWindowId: action.app,
+          nextZIndex: state.nextZIndex + 1,
+        }
+      }
+      const defaultsMax = APP_DEFAULTS[action.app]
+      const basePos = getInitialPosition(action.app, state.windows)
+      const newMaxWindow: WindowState = {
+        id: action.app,
+        title: defaultsMax.title,
+        minimized: false,
+        position: { x: 0, y: 0 },
+        size: { width: 9999, height: 9999 },
+        zIndex: state.nextZIndex,
+        isMaximized: true,
+        previousPosition: basePos,
+        previousSize: { width: defaultsMax.width, height: defaultsMax.height },
+      }
+      return {
+        ...state,
+        startMenuOpen: false,
+        windows: [...state.windows, newMaxWindow],
+        activeWindowId: action.app,
+        nextZIndex: state.nextZIndex + 1,
+      }
+    }
+
     case "SELECT_ICON":
       return { ...state, selectedIcon: action.icon, startMenuOpen: false }
 
@@ -185,6 +280,9 @@ interface OSContextType {
   minimizeApp: (id: AppId) => void
   restoreApp: (id: AppId) => void
   focusApp: (id: AppId) => void
+  maximizeApp: (id: AppId) => void
+  restoreMaximize: (id: AppId) => void
+  openAppMaximized: (app: AppId) => void
 }
 
 const OSContext = createContext<OSContextType | null>(null)
@@ -197,10 +295,13 @@ export function OSProvider({ children }: { children: ReactNode }) {
   const minimizeApp = useCallback((id: AppId) => dispatch({ type: "MINIMIZE_WINDOW", id }), [])
   const restoreApp = useCallback((id: AppId) => dispatch({ type: "RESTORE_WINDOW", id }), [])
   const focusApp = useCallback((id: AppId) => dispatch({ type: "FOCUS_WINDOW", id }), [])
+  const maximizeApp = useCallback((id: AppId) => dispatch({ type: "MAXIMIZE_WINDOW", id }), [])
+  const restoreMaximize = useCallback((id: AppId) => dispatch({ type: "RESTORE_MAXIMIZE", id }), [])
+  const openAppMaximized = useCallback((app: AppId) => dispatch({ type: "OPEN_WINDOW_MAXIMIZED", app }), [])
 
   return (
     <OSContext.Provider
-      value={{ state, dispatch, openApp, closeApp, minimizeApp, restoreApp, focusApp }}
+      value={{ state, dispatch, openApp, closeApp, minimizeApp, restoreApp, focusApp, maximizeApp, restoreMaximize, openAppMaximized }}
     >
       {children}
     </OSContext.Provider>

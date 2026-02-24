@@ -45,22 +45,6 @@ export function DesktopShell() {
         {/* Taskbar */}
         <Taskbar />
       </div>
-
-      {/* Ops mode: System Online toast (brief) */}
-      {!isClassic && <SystemToast />}
-    </div>
-  )
-}
-
-function SystemToast() {
-  return (
-    <div className="fixed top-4 right-4 z-[60] boot-line pointer-events-none">
-      <div className="flex items-center gap-2 rounded-sm border border-[#4ade80]/20 bg-[#0f172a]/90 px-3 py-1.5 backdrop-blur-sm">
-        <span className="h-1.5 w-1.5 rounded-full bg-[#4ade80] animate-pulse" />
-        <span className="text-[10px] font-mono text-[#4ade80]/70 uppercase tracking-wider">
-          System Online
-        </span>
-      </div>
     </div>
   )
 }

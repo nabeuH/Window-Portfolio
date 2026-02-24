@@ -4,16 +4,17 @@ import { useOS, type AppId } from "@/lib/os-context"
 import { useState, useRef, useEffect, useCallback } from "react"
 
 const HELP_TEXT = `Available commands:
-  help       - Show this help message
-  whoami     - Display user info
-  about      - Open About window
-  projects   - Open Projects window
-  resume     - Open Resume window
-  contact    - Open Contact window
-  clear      - Clear terminal
-  status     - System status
-  ls         - List directory contents
-  neofetch   - Display system info`
+  open window   - Open the desktop interface
+  help          - Show this help message
+  whoami        - Display user info
+  about         - Open About window
+  projects      - Open Projects window
+  resume        - Open Resume window
+  contact       - Open Contact window
+  clear         - Clear terminal
+  status        - System status
+  ls            - List directory contents
+  neofetch      - Display system info`
 
 const WHOAMI_TEXT = `developer@portfolio-os
 Role: Full-Stack Developer
@@ -60,7 +61,7 @@ interface TerminalLine {
 }
 
 export function TerminalApp() {
-  const { state, openApp } = useOS()
+  const { state, openApp, restoreMaximize } = useOS()
   const [lines, setLines] = useState<TerminalLine[]>([
     { type: "output", content: "Portfolio OS Terminal v2.6.1" },
     { type: "output", content: 'Type "help" for available commands.\n' },
@@ -107,11 +108,26 @@ export function TerminalApp() {
       } else if (trimmed === "status") {
         newLines.push({ type: "output", content: STATUS_TEXT })
       } else if (appCommands[trimmed]) {
+        // Restore terminal from maximized first so the opened window is visible
+        const termWinApp = state.windows.find((w) => w.id === "terminal")
+        if (termWinApp?.isMaximized) {
+          restoreMaximize("terminal")
+        }
         openApp(appCommands[trimmed])
         newLines.push({
           type: "output",
           content: `[SYS] Opening ${trimmed}...`,
         })
+      } else if (trimmed === "open window") {
+        newLines.push({
+          type: "output",
+          content: "[SYS] Opening desktop interface...",
+        })
+        // Restore terminal from maximized so desktop is visible
+        const termWin = state.windows.find((w) => w.id === "terminal")
+        if (termWin?.isMaximized) {
+          restoreMaximize("terminal")
+        }
       } else if (trimmed === "") {
         // Do nothing on empty
       } else {
@@ -125,7 +141,7 @@ export function TerminalApp() {
       setHistory((prev) => [cmd, ...prev])
       setHistoryIndex(-1)
     },
-    [lines, openApp]
+    [lines, openApp, restoreMaximize, state.windows]
   )
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -154,10 +170,9 @@ export function TerminalApp() {
 
   return (
     <div
-      className={`flex flex-col font-mono text-sm ${
+      className={`flex flex-col font-mono text-sm h-full ${
         isClassic ? "bg-[#1e293b] text-[#e0e0e0]" : "bg-[#0a0a0a] text-[#4ade80]"
       }`}
-      style={{ width: 650, height: 400 }}
       onClick={() => inputRef.current?.focus()}
     >
       <div ref={scrollRef} className="flex-1 overflow-auto p-3">

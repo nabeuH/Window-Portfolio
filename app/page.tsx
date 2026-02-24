@@ -6,11 +6,13 @@ import { BootScreen } from "@/components/os/boot-screen"
 import { DesktopShell } from "@/components/os/desktop-shell"
 
 function PortfolioOS() {
-  const { state, dispatch } = useOS()
+  const { state, dispatch, openAppMaximized } = useOS()
 
   const handleBootComplete = useCallback(() => {
     dispatch({ type: "BOOT_COMPLETE" })
-  }, [dispatch])
+    // Open terminal maximized as the entry point after boot
+    openAppMaximized("terminal")
+  }, [dispatch, openAppMaximized])
 
   if (!state.bootComplete) {
     return <BootScreen onComplete={handleBootComplete} />

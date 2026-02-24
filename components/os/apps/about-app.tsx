@@ -30,7 +30,7 @@ export function AboutApp() {
   return (
     <div
       className={`p-4 ${isClassic ? "text-[#1e293b]" : "text-[#e0e0e0]"}`}
-      style={{ width: 600, minHeight: 400 }}
+      style={{ minHeight: 400 }}
     >
       {/* Header */}
       <div className="flex items-start gap-4 mb-4">

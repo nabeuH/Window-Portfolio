@@ -67,7 +67,7 @@ export function ProjectsApp() {
       className={`flex flex-col h-full ${
         isClassic ? "text-[#1e293b]" : "text-[#e0e0e0]"
       }`}
-      style={{ width: 750, minHeight: 400 }}
+      style={{ minHeight: 400 }}
     >
       {/* Path bar */}
       <div

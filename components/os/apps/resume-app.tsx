@@ -12,7 +12,7 @@ export function ResumeApp() {
       className={`flex flex-col p-4 gap-4 ${
         isClassic ? "text-[#1e293b]" : "text-[#e0e0e0]"
       }`}
-      style={{ width: 550, minHeight: 380 }}
+      style={{ minHeight: 380 }}
     >
       {/* Header */}
       <div className="flex items-center gap-3">

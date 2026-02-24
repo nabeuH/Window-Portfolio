@@ -31,8 +31,10 @@ export function WindowManager() {
             title={win.title}
             zIndex={win.zIndex}
             position={win.position}
+            size={win.size}
             minimized={win.minimized}
             isActive={state.activeWindowId === win.id}
+            isMaximized={win.isMaximized}
           >
             <AppComponent />
           </AppWindow>

@@ -21,7 +21,7 @@ export function ContactApp() {
       className={`flex flex-col p-4 gap-4 ${
         isClassic ? "text-[#1e293b]" : "text-[#e0e0e0]"
       }`}
-      style={{ width: 500, minHeight: 360 }}
+      style={{ minHeight: 360 }}
     >
       {/* Header */}
       <div>

@@ -11,6 +11,7 @@ import {
   FileText,
   Mail,
   TerminalSquare,
+  Copy,
 } from "lucide-react"
 
 const APP_ICONS: Record<AppId, ReactNode> = {
@@ -27,8 +28,10 @@ interface AppWindowProps {
   children: ReactNode
   zIndex: number
   position: { x: number; y: number }
+  size: { width: number; height: number }
   minimized: boolean
   isActive: boolean
+  isMaximized: boolean
 }
 
 export function AppWindow({
@@ -37,10 +40,12 @@ export function AppWindow({
   children,
   zIndex,
   position,
+  size,
   minimized,
   isActive,
+  isMaximized,
 }: AppWindowProps) {
-  const { dispatch, closeApp, minimizeApp, focusApp, state } = useOS()
+  const { dispatch, closeApp, minimizeApp, focusApp, maximizeApp, restoreMaximize, state } = useOS()
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null)
   const windowRef = useRef<HTMLDivElement>(null)
 
@@ -49,6 +54,8 @@ export function AppWindow({
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       focusApp(id)
+      if (isMaximized) return
+
       dragRef.current = {
         startX: e.clientX,
         startY: e.clientY,
@@ -79,26 +86,69 @@ export function AppWindow({
       window.addEventListener("mousemove", handleMouseMove)
       window.addEventListener("mouseup", handleMouseUp)
     },
-    [id, position, dispatch, focusApp]
+    [id, position, dispatch, focusApp, isMaximized]
+  )
+
+  const handleMaximizeToggle = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation()
+      if (isMaximized) {
+        restoreMaximize(id)
+      } else {
+        maximizeApp(id)
+      }
+    },
+    [id, isMaximized, maximizeApp, restoreMaximize]
   )
 
   if (minimized) return null
 
-  return (
-    <div
-      ref={windowRef}
-      className="window-open absolute hidden md:block"
-      style={{
+  // Chromeless fullscreen mode for terminal when maximized
+  const isChromeless = isMaximized && id === "terminal"
+
+  if (isChromeless) {
+    return (
+      <div
+        ref={windowRef}
+        className="window-open hidden md:block fixed inset-0"
+        style={{ zIndex: zIndex + 100 }}
+        onMouseDown={() => focusApp(id)}
+      >
+        <div className="flex flex-col h-full w-full bg-[#0a0a0a]">
+          {children}
+        </div>
+      </div>
+    )
+  }
+
+  const windowStyle: React.CSSProperties = isMaximized
+    ? {
+        left: 0,
+        top: 0,
+        right: 0,
+        bottom: 40, // taskbar height
+        zIndex,
+        width: "auto",
+        height: "auto",
+        position: "absolute",
+      }
+    : {
         left: position.x,
         top: position.y,
         zIndex,
-        width: "auto",
+        width: size.width,
         minWidth: 400,
-      }}
+      }
+
+  return (
+    <div
+      ref={windowRef}
+      className={`window-open hidden md:block ${isMaximized ? "" : "absolute"}`}
+      style={windowStyle}
       onMouseDown={() => focusApp(id)}
     >
       <div
-        className={`flex flex-col overflow-hidden shadow-2xl ${
+        className={`flex flex-col overflow-hidden shadow-2xl h-full ${
           isClassic
             ? "border-2 border-[#94a3b8] rounded bg-[#e2e8f0]"
             : `border rounded-sm ${
@@ -110,7 +160,9 @@ export function AppWindow({
       >
         {/* Title bar */}
         <div
-          className={`window-drag flex h-8 items-center justify-between gap-2 px-2 select-none ${
+          className={`flex h-8 items-center justify-between gap-2 px-2 select-none shrink-0 ${
+            isMaximized ? "cursor-default" : "window-drag"
+          } ${
             isClassic
               ? isActive
                 ? "bg-gradient-to-r from-[#2563eb] to-[#60a5fa]"
@@ -150,14 +202,21 @@ export function AppWindow({
               <Minus size={12} className={isClassic ? "text-[#1e293b]" : ""} />
             </button>
             <button
+              onClick={handleMaximizeToggle}
               className={`flex h-5 w-6 items-center justify-center transition-colors cursor-pointer ${
                 isClassic
                   ? "bg-[#e2e8f0] hover:bg-[#f1f5f9] border border-[#94a3b8] rounded-sm"
-                  : "hover:bg-[#334155] rounded-sm text-[#94a3b8] hover:text-[#e0e0e0]"
+                  : `hover:bg-[#334155] rounded-sm hover:text-[#e0e0e0] ${
+                      isMaximized ? "text-[#4ade80]" : "text-[#94a3b8]"
+                    }`
               }`}
-              aria-label="Maximize"
+              aria-label={isMaximized ? "Restore" : "Maximize"}
             >
-              <Square size={10} className={isClassic ? "text-[#1e293b]" : ""} />
+              {isMaximized ? (
+                <Copy size={10} className={isClassic ? "text-[#1e293b]" : ""} />
+              ) : (
+                <Square size={10} className={isClassic ? "text-[#1e293b]" : ""} />
+              )}
             </button>
             <button
               onClick={(e) => {
@@ -177,7 +236,10 @@ export function AppWindow({
         </div>
 
         {/* Content */}
-        <div className={`overflow-auto ${isClassic ? "bg-[#e2e8f0]" : ""}`} style={{ maxHeight: "70vh" }}>
+        <div
+          className={`overflow-auto flex-1 ${isClassic ? "bg-[#e2e8f0]" : ""}`}
+          style={isMaximized ? undefined : { maxHeight: "70vh" }}
+        >
           {children}
         </div>
       </div>
